@@ -739,7 +739,17 @@ export default function InboxDashboard() {
         {/* Right Side: AI Panel */}
         <div className="w-[300px] bg-gray-950 hidden lg:flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-white/5 flex items-center gap-1.5">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Insights</h2>
+            <div className="flex items-center justify-between w-full">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Insights</h2>
+              {activeThread && (
+                <button onClick={() => {
+                  const content = activeThread.messages.map(m => m.content).join('\n');
+                  generateAIInsights(content);
+                }} title="Regenerate Insights" className="text-gray-500 hover:text-white transition-colors">
+                  <RefreshCw size={11} className={aiLoading ? 'animate-spin' : ''} />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="p-4 space-y-5">
