@@ -127,6 +127,7 @@ export default function InboxDashboard() {
   const [newLabelText, setNewLabelText] = useState('');
   const [searchHistory, setSearchHistory] = useState(['invoice', 'meeting', 'action required']);
   const [showHistory, setShowHistory] = useState(false);
+  const [completedTasks, setCompletedTasks] = useState({});
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
 
   // AI Insights
@@ -383,6 +384,13 @@ export default function InboxDashboard() {
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const toggleTask = (taskIndex) => {
+    setCompletedTasks(prev => ({
+      ...prev,
+      [selectedId + '-' + taskIndex]: !prev[selectedId + '-' + taskIndex]
+    }));
   };
 
   const handleCopy = () => {
