@@ -302,6 +302,13 @@ export default function InboxDashboard() {
     }));
   };
 
+  const handleTemplateChange = (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    setReplyText(val);
+    e.target.value = '';
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(replyText);
     setCopied(true);
@@ -496,7 +503,15 @@ export default function InboxDashboard() {
               <div className="p-4 border-t border-white/5 space-y-3 bg-gray-900/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-xs text-gray-400">
-                    <CornerUpLeft size={12} /> Reply to {activeThread.from.split(' <')[0]}
+                    <div className="flex items-center gap-2 shrink-0">
+                    <CornerUpLeft size={12} />
+                    <select onChange={handleTemplateChange} className="bg-transparent border border-white/5 text-[10px] text-gray-400 outline-none rounded px-1.5 py-0.5 cursor-pointer max-w-[120px]">
+                      <option value="" className="bg-gray-900">Template</option>
+                      <option value="Hi, scheduling a quick sync. Does next Tuesday afternoon work for you?" className="bg-gray-900">Meeting Sync</option>
+                      <option value="Hi there, thanks for the update. I will review this and follow up shortly." className="bg-gray-900">Ack Update</option>
+                      <option value="Thanks for reaching out! I am currently out of office and will reply when I return." className="bg-gray-900">Out of Office</option>
+                    </select>
+                  </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Tone selectors */}
