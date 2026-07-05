@@ -525,8 +525,11 @@ export default function InboxDashboard() {
                 {error}
               </div>
             ) : threads.length === 0 ? (
-              <div className="p-8 text-center text-xs text-gray-500">
-                No threads found in your inbox.
+              <div className="p-8 text-center text-xs text-gray-500 flex flex-col items-center gap-3">
+                <svg className="w-12 h-12 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.25 0l-2.25 1.5" />
+                </svg>
+                <span>No email threads found matching filter.</span>
               </div>
             ) : (
               threads
