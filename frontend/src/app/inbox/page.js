@@ -117,6 +117,7 @@ export default function InboxDashboard() {
   const [sending, setSending] = useState(false);
   const [draftsLoading, setDraftsLoading] = useState({ formal: false, casual: false, urgent: false });
   const [copied, setCopied] = useState(false);
+  const [textSize, setTextSize] = useState('medium');
   const [summaryLength, setSummaryLength] = useState('medium');
   const [toastMessage, setToastMessage] = useState('');
   const [offlineQueue, setOfflineQueue] = useState([]);
@@ -632,7 +633,7 @@ export default function InboxDashboard() {
                     {msg.htmlContent ? (
                       <SafeHtmlViewer html={msg.htmlContent} id={msg.id} />
                     ) : (
-                      <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+                      <p className={`text-gray-300 leading-relaxed whitespace-pre-wrap ${textSize === 'small' ? 'text-[11px]' : textSize === 'large' ? 'text-sm' : 'text-xs'}`}>
                         {msg.content}
                       </p>
                     )}
