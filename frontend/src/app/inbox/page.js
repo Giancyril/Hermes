@@ -539,7 +539,7 @@ export default function InboxDashboard() {
                     key={t.id}
                     onClick={() => handleSelectThread(t)}
                     onDoubleClick={() => toggleReadStatus(t.id)}
-                    className={`p-4 cursor-pointer transition-all duration-150 relative ${selectedId === t.id ? 'bg-white/5 border-l-2 border-indigo-500' : 'hover:bg-white/[0.02]'
+                    className={`p-4 cursor-pointer transition-all duration-200 relative hover:translate-x-0.5 border-b border-white/[0.02] ${selectedId === t.id ? 'bg-indigo-950/20 border-l-2 border-indigo-550 shadow-inner' : 'hover:bg-white/[0.015]'
                       }`}
                   >
                     <div className="flex items-center justify-between mb-1">
