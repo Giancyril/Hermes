@@ -515,7 +515,7 @@ export default function InboxDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Tone selectors */}
-                    {['formal', 'casual', 'urgent'].map(t => (
+                    {['formal', 'casual', 'urgent', 'apologetic'].map(t => (
                       <button
                         key={t}
                         onClick={() => handleToneChange(t)}
