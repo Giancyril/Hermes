@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles, Mail, Send, ChevronRight, LogOut, Search, RefreshCw,
-  AlertCircle, Star, ArrowRight, CornerUpLeft, CheckCircle2, MessageSquare, Trash2, Clipboard, Check, Download, HelpCircle, Paperclip, Globe
+  AlertCircle, Star, ArrowRight, CornerUpLeft, CheckCircle2, MessageSquare, Trash2, Clipboard, Check, Download, HelpCircle, Paperclip, Globe, X
 } from 'lucide-react';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import CustomSelectDropdown from '@/components/CustomSelectDropdown';
@@ -427,8 +427,13 @@ export default function InboxDashboard() {
                 onChange={e => setSearch(e.target.value)}
                 onFocus={() => setShowHistory(true)}
                 onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-                className="bg-white/5 border border-white/5 text-xs text-white rounded-lg pl-9 pr-4 py-1.5 w-64 outline-none focus:border-white/10 transition-all"
+                className="bg-white/5 border border-white/5 text-xs text-white rounded-lg pl-9 pr-8 py-1.5 w-64 outline-none focus:border-white/10 transition-all"
               />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                  <X size={10} />
+                </button>
+              )}
               {showHistory && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-white/5 rounded-xl shadow-xl z-50 p-2 space-y-1">
                   <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider px-2 py-1">Recent Searches</p>
