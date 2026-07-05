@@ -6,6 +6,7 @@ import {
   AlertCircle, Star, ArrowRight, CornerUpLeft, CheckCircle2, MessageSquare, Trash2, Clipboard, Check, Download, HelpCircle, Paperclip, Globe
 } from 'lucide-react';
 import UrgencyBadge from '@/components/UrgencyBadge';
+import CustomSelectDropdown from '@/components/CustomSelectDropdown';
 import api from '@/lib/api';
 
 const SafeHtmlViewer = ({ html, id }) => {
@@ -592,12 +593,17 @@ export default function InboxDashboard() {
                   <div className="flex items-center gap-1 text-xs text-gray-400">
                     <div className="flex items-center gap-2 shrink-0">
                     <CornerUpLeft size={12} />
-                    <select onChange={handleTemplateChange} className="bg-transparent border border-white/5 text-[10px] text-gray-400 outline-none rounded px-1.5 py-0.5 cursor-pointer max-w-[120px]">
-                      <option value="" className="bg-gray-900">Template</option>
-                      <option value="Hi, scheduling a quick sync. Does next Tuesday afternoon work for you?" className="bg-gray-900">Meeting Sync</option>
-                      <option value="Hi there, thanks for the update. I will review this and follow up shortly." className="bg-gray-900">Ack Update</option>
-                      <option value="Thanks for reaching out! I am currently out of office and will reply when I return." className="bg-gray-900">Out of Office</option>
-                    </select>
+                    <CustomSelectDropdown
+                      value=""
+                      onChange={(val) => handleTemplateChange({ target: { value: val } })}
+                      placeholder="Template"
+                      options={[
+                        { value: "Hi, scheduling a quick sync. Does next Tuesday afternoon work for you?", label: "Meeting Sync" },
+                        { value: "Hi there, thanks for the update. I will review this and follow up shortly.", label: "Ack Update" },
+                        { value: "Thanks for reaching out! I am currently out of office and will reply when I return.", label: "Out of Office" }
+                      ]}
+                      className="w-24 text-[10px]"
+                    />
                   </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -696,11 +702,17 @@ export default function InboxDashboard() {
                     </h3>
                     {summary && (
                       <div className="flex items-center gap-2">
-                      <select value={summaryLength} onChange={(e) => setSummaryLength(e.target.value)} className="bg-transparent border border-white/5 text-[9px] text-gray-500 outline-none rounded cursor-pointer">
-                        <option value="short" className="bg-gray-900">Short</option>
-                        <option value="medium" className="bg-gray-900">Med</option>
-                        <option value="long" className="bg-gray-900">Long</option>
-                      </select>
+                      <CustomSelectDropdown
+                        value={summaryLength}
+                        onChange={(val) => setSummaryLength(val)}
+                        placeholder="Med"
+                        options={[
+                          { value: "short", label: "Short" },
+                          { value: "medium", label: "Med" },
+                          { value: "long", label: "Long" }
+                        ]}
+                        className="w-16"
+                      />
                       <button onClick={handleExportSummary} title="Export to TXT" className="text-gray-500 hover:text-white transition-colors">
                         <Download size={11} />
                       </button>
@@ -760,13 +772,18 @@ export default function InboxDashboard() {
                 <div className="space-y-2">
                   <h3 className="text-xs font-bold text-white flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><Globe size={11} className="text-indigo-400" /> AI Translation</span>
-                    <select onChange={(e) => handleTranslate(e.target.value)} className="bg-transparent border border-white/5 text-[10px] text-gray-500 outline-none rounded cursor-pointer">
-                      <option value="" className="bg-gray-900">Select Lang</option>
-                      <option value="Spanish" className="bg-gray-900">Spanish</option>
-                      <option value="French" className="bg-gray-900">French</option>
-                      <option value="Japanese" className="bg-gray-900">Japanese</option>
-                      <option value="Filipino" className="bg-gray-900">Filipino</option>
-                    </select>
+                    <CustomSelectDropdown
+                      value=""
+                      onChange={(val) => handleTranslate(val)}
+                      placeholder="Select Lang"
+                      options={[
+                        { value: "Spanish", label: "Spanish" },
+                        { value: "French", label: "French" },
+                        { value: "Japanese", label: "Japanese" },
+                        { value: "Filipino", label: "Filipino" }
+                      ]}
+                      className="w-24 font-normal"
+                    />
                   </h3>
                   {translating ? (
                     <div className="text-[10px] text-gray-600">Translating...</div>
