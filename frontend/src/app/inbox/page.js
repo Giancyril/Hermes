@@ -120,6 +120,8 @@ export default function InboxDashboard() {
   const [translating, setTranslating] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [starredThreads, setStarredThreads] = useState({});
+  const [customLabels, setCustomLabels] = useState({});
+  const [newLabelText, setNewLabelText] = useState('');
   const [searchHistory, setSearchHistory] = useState(['invoice', 'meeting', 'action required']);
   const [showHistory, setShowHistory] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
@@ -361,6 +363,15 @@ export default function InboxDashboard() {
     }
   };
 
+  const addLabel = () => {
+    if (!newLabelText.trim() || !selectedId) return;
+    setCustomLabels(prev => ({
+      ...prev,
+      [selectedId]: [...(prev[selectedId] || []), newLabelText.trim()]
+    }));
+    setNewLabelText('');
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(replyText);
     setCopied(true);
@@ -538,6 +549,9 @@ export default function InboxDashboard() {
                       <span className="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                         {classification.intent}
                       </span>
+                      <div className="flex items-center gap-1">
+                        <input type="text" placeholder="Add tag..." value={newLabelText} onChange={e=>setNewLabelText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') addLabel();}} className="bg-transparent border border-white/5 text-[9px] px-1 py-0.5 rounded outline-none w-16" />
+                      </div>
                       <button onClick={() => handleDeleteThread(activeThread.id)} title="Delete Thread" className="text-gray-500 hover:text-red-400 transition-colors">
                         <Trash2 size={13} />
                       </button>
