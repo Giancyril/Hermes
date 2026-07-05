@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, Mail, Send, ChevronRight, LogOut, Search, RefreshCw, 
+import {
+  Sparkles, Mail, Send, ChevronRight, LogOut, Search, RefreshCw,
   AlertCircle, Star, ArrowRight, CornerUpLeft, CheckCircle2, MessageSquare, Trash2
 } from 'lucide-react';
 import UrgencyBadge from '@/components/UrgencyBadge';
@@ -15,14 +15,15 @@ export default function InboxDashboard() {
   const [search, setSearch] = useState('');
   const [activeTone, setActiveTone] = useState('formal');
   const [replyText, setReplyText] = useState('');
-  
+
   // Loaders
   const [loading, setLoading] = useState(true);
   const [threadLoading, setThreadLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [sending, setSending] = useState(false);
-  
+  const [draftsLoading, setDraftsLoading] = useState({ formal: false, casual: false, urgent: false });
+
   // AI Insights
   const [summary, setSummary] = useState('');
   const [drafts, setDrafts] = useState(null);
@@ -65,10 +66,10 @@ export default function InboxDashboard() {
 
       const res = await api.get(`/api/emails/${threadId}`);
       setActiveThread(res.data);
-      
+
       // Concatenate messages content for AI processing
       const content = res.data.messages.map(m => `${m.sender}: ${m.content}`).join('\n\n');
-      
+
       // Load AI insights in parallel
       generateAIInsights(content);
     } catch (err) {
@@ -81,7 +82,8 @@ export default function InboxDashboard() {
   const generateAIInsights = async (threadContent) => {
     try {
       setAiLoading(true);
-      
+      setActiveTone('formal');
+
       // Run AI calls in parallel
       const [summaryRes, draftRes, followupRes, classifyRes] = await Promise.all([
         api.post('/api/ai/summarize', { threadContent }).catch(e => ({ data: { summary: 'Summary unavailable.' } })),
@@ -91,7 +93,7 @@ export default function InboxDashboard() {
       ]);
 
       setSummary(summaryRes.data.summary);
-      
+
       // Process bullet points from followups response
       const bulletPoints = followupRes.data.followups
         .split('\n')
@@ -104,22 +106,18 @@ export default function InboxDashboard() {
       // Parse drafts if available
       if (draftRes && draftRes.data.drafts) {
         const rawText = draftRes.data.drafts;
-        
+
         // Simple draft split parser for Direct vs Warmer formats from prompt
-        // Let's create casual, formal, urgent fallbacks
         const d1Match = rawText.match(/Draft 1[\s\S]*?(?=Draft 2|$)/i);
-        const d2Match = rawText.match(/Draft 2[\s\S]*$/i);
-        
-        const d1 = d1Match ? d1Match[0].replace(/Draft 1\s*\(direct\):?/i, '').trim() : '';
-        const d2 = d2Match ? d2Match[0].replace(/Draft 2\s*\(warmer\):?/i, '').trim() : '';
+        const d1 = d1Match ? d1Match[0].replace(/Draft 1\s*\(direct\):?/i, '').trim() : rawText;
 
         setDrafts({
-          formal: d1 || rawText,
-          casual: d2 || rawText,
-          urgent: d1 || rawText
+          formal: d1,
+          casual: '',
+          urgent: ''
         });
-        
-        setReplyText(d1 || rawText);
+
+        setReplyText(d1);
       } else {
         // Fallback drafts
         setDrafts({
@@ -133,6 +131,39 @@ export default function InboxDashboard() {
       console.error('AI Insights failed:', err);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleToneChange = async (tone) => {
+    setActiveTone(tone);
+    if (!activeThread) return;
+
+    if (drafts && drafts[tone]) {
+      setReplyText(drafts[tone]);
+      return;
+    }
+
+    try {
+      setDraftsLoading(prev => ({ ...prev, [tone]: true }));
+      const content = activeThread.messages.map(m => `${m.sender}: ${m.content}`).join('\n\n');
+      const res = await api.post('/api/ai/draft', { threadContent: content, tone });
+      if (res && res.data.drafts) {
+        const rawText = res.data.drafts;
+
+        // Simple draft split parser for Direct vs Warmer formats
+        const d1Match = rawText.match(/Draft 1[\s\S]*?(?=Draft 2|$)/i);
+        const d1 = d1Match ? d1Match[0].replace(/Draft 1\s*\(direct\):?/i, '').trim() : rawText;
+
+        setDrafts(prev => ({
+          ...prev,
+          [tone]: d1
+        }));
+        setReplyText(d1);
+      }
+    } catch (err) {
+      console.error(`Failed to generate ${tone} draft:`, err);
+    } finally {
+      setDraftsLoading(prev => ({ ...prev, [tone]: false }));
     }
   };
 
@@ -176,9 +207,9 @@ export default function InboxDashboard() {
             {/* Search */}
             <div className="relative hidden md:block">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text" 
-                placeholder="Search subject or sender..." 
+              <input
+                type="text"
+                placeholder="Search subject or sender..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="bg-white/5 border border-white/5 text-xs text-white rounded-lg pl-9 pr-4 py-1.5 w-64 outline-none focus:border-white/10 transition-all"
@@ -187,13 +218,13 @@ export default function InboxDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={handleSync}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 text-xs text-gray-400 hover:text-white transition-colors"
             >
               <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} /> Sync
             </button>
-            <button 
+            <button
               onClick={() => {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
@@ -208,7 +239,7 @@ export default function InboxDashboard() {
 
       {/* ── Dashboard Grid ── */}
       <div className="flex-1 flex overflow-hidden">
-        
+
         {/* Left Side: Threads List */}
         <div className="w-full md:w-[350px] lg:w-[400px] border-r border-white/5 flex flex-col shrink-0">
           <div className="p-4 border-b border-white/5 flex items-center justify-between">
@@ -237,12 +268,11 @@ export default function InboxDashboard() {
               threads
                 .filter(t => t.subject.toLowerCase().includes(search.toLowerCase()) || t.from.toLowerCase().includes(search.toLowerCase()))
                 .map(t => (
-                  <div 
+                  <div
                     key={t.id}
                     onClick={() => handleSelectThread(t)}
-                    className={`p-4 cursor-pointer transition-all duration-150 relative ${
-                      selectedId === t.id ? 'bg-white/5 border-l-2 border-indigo-500' : 'hover:bg-white/[0.02]'
-                    }`}
+                    className={`p-4 cursor-pointer transition-all duration-150 relative ${selectedId === t.id ? 'bg-white/5 border-l-2 border-indigo-500' : 'hover:bg-white/[0.02]'
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-xs truncate max-w-[200px] ${!t.isRead ? 'text-white font-bold' : 'text-gray-400'}`}>
@@ -319,17 +349,14 @@ export default function InboxDashboard() {
                     {['formal', 'casual', 'urgent'].map(t => (
                       <button
                         key={t}
-                        onClick={() => {
-                          setActiveTone(t);
-                          if (drafts) setReplyText(drafts[t] || '');
-                        }}
-                        className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider border transition-all ${
-                          activeTone === t 
-                            ? 'bg-indigo-600 border-indigo-500/50 text-white shadow-md' 
-                            : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'
-                        }`}
+                        onClick={() => handleToneChange(t)}
+                        disabled={draftsLoading[t]}
+                        className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider border transition-all flex items-center gap-1 ${activeTone === t
+                          ? 'bg-indigo-600 border-indigo-500/50 text-white shadow-md'
+                          : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'
+                          } disabled:opacity-50`}
                       >
-                        {t}
+                        {t} {draftsLoading[t] && <RefreshCw size={8} className="animate-spin text-white" />}
                       </button>
                     ))}
                   </div>
@@ -375,8 +402,7 @@ export default function InboxDashboard() {
         {/* Right Side: AI Panel */}
         <div className="w-[300px] bg-gray-950 hidden lg:flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-white/5 flex items-center gap-1.5">
-            <Sparkles size={14} className="text-indigo-400 animate-pulse" />
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Copilot Insights</h2>
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Insights</h2>
           </div>
 
           <div className="p-4 space-y-5">
@@ -426,7 +452,6 @@ export default function InboxDashboard() {
                     )}
                   </div>
                 </div>
-
                 {/* Tone selector preview drafts */}
                 {drafts && (
                   <div className="space-y-2">
@@ -437,20 +462,18 @@ export default function InboxDashboard() {
                       {['formal', 'casual', 'urgent'].map(t => (
                         <button
                           key={t}
-                          onClick={() => {
-                            setActiveTone(t);
-                            setReplyText(drafts[t] || '');
-                          }}
-                          className="w-full text-left bg-gray-900 hover:bg-gray-850 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-all space-y-1.5 group"
+                          onClick={() => handleToneChange(t)}
+                          disabled={draftsLoading[t]}
+                          className="w-full text-left bg-gray-900 hover:bg-gray-850 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-all space-y-1.5 group flex flex-col disabled:opacity-75"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-indigo-400 transition-colors">
-                              {t} tone
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+                              {t} tone {draftsLoading[t] && <RefreshCw size={8} className="animate-spin text-indigo-455" />}
                             </span>
                             <ChevronRight size={10} className="text-gray-700" />
                           </div>
                           <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
-                            {drafts[t]}
+                            {drafts[t] || 'Click to generate draft...'}
                           </p>
                         </button>
                       ))}
