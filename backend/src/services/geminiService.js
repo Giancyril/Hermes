@@ -42,7 +42,7 @@ Summary:`;
 /**
  * Generate email draft replies.
  * @param {string} threadContent - Thread context.
- * @param {string} tone - formal/casual/urgent/apologetic.
+ * @param {string} tone - formal/casual/urgent/apologetic/assertive.
  * @returns {Promise<string>} Generated drafts.
  */
 async function generateDrafts(threadContent, tone = 'formal') {
