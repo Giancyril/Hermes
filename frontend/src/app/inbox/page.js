@@ -698,6 +698,18 @@ export default function InboxDashboard() {
                   </div>
                 </div>
 
+                {/* Sender Profile Stats */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-pink-500" /> Sender Profile
+                  </h3>
+                  <div className="bg-gray-900 border border-white/5 rounded-xl p-3 text-[11px] text-gray-500 space-y-1.5">
+                    <div className="flex justify-between"><span>Sender Rank</span><span className="text-white font-bold">Frequent</span></div>
+                    <div className="flex justify-between"><span>Previous Threads</span><span className="text-white">8 interactions</span></div>
+                    <div className="flex justify-between"><span>Avg Response Time</span><span className="text-white">2.5 hours</span></div>
+                  </div>
+                </div>
+
                 {/* Suggested actions */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
