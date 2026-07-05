@@ -14,7 +14,7 @@ const SafeHtmlViewer = ({ html, id }) => {
   React.useEffect(() => {
     const handleMessage = (event) => {
       if (event.data && event.data.type === 'resize-email-iframe' && event.data.id === id) {
-        setHeight(`${event.data.height + 24}px`);
+        setHeight(`${event.data.height}px`);
       }
     };
 
@@ -31,7 +31,7 @@ const SafeHtmlViewer = ({ html, id }) => {
       <style>
         body {
           margin: 0;
-          padding: 16px;
+          padding: 0;
           background-color: #ffffff;
           color: #1a1a1a;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -52,13 +52,20 @@ const SafeHtmlViewer = ({ html, id }) => {
         }
       </style>
       <script>
+        let lastHeight = 0;
         function sendHeight() {
-          const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-          window.parent.postMessage({
-            type: 'resize-email-iframe',
-            id: '${id}',
-            height: height
-          }, '*');
+          const wrapper = document.getElementById('email-content-wrapper');
+          if (!wrapper) return;
+          const height = Math.ceil(wrapper.getBoundingClientRect().height);
+          // Only send message if change is significant to avoid infinite feedback loops
+          if (height > 0 && Math.abs(height - lastHeight) > 3) {
+            lastHeight = height;
+            window.parent.postMessage({
+              type: 'resize-email-iframe',
+              id: '${id}',
+              height: height
+            }, '*');
+          }
         }
         window.addEventListener('load', sendHeight);
         window.addEventListener('resize', sendHeight);
@@ -66,9 +73,12 @@ const SafeHtmlViewer = ({ html, id }) => {
       </script>
     </head>
     <body>
-      ${html}
+      <div id="email-content-wrapper" style="padding: 16px; box-sizing: border-box; overflow: hidden; width: 100%;">
+        ${html}
+      </div>
       <script>
-        setTimeout(sendHeight, 200);
+        setTimeout(sendHeight, 150);
+        setTimeout(sendHeight, 600); // Back-up for image loads
       </script>
     </body>
     </html>
