@@ -561,7 +561,7 @@ export default function InboxDashboard() {
                   <span className="text-xs text-gray-400">{activeThread.from}</span>
                   {classification && (
                     <div className="flex items-center gap-2">
-                      <button onClick={() => toggleReadStatus(activeThread.id)} title="Toggle Read/Unread" className="px-2 py-0.5 rounded bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] text-gray-400 hover:text-white transition-all">
+                      <button onClick={() => toggleReadStatus(activeThread.id)} title="Toggle Email Read/Unread Status" className="px-2 py-0.5 rounded bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] text-gray-400 hover:text-white transition-all">
                         {threads.find(x => x.id === activeThread.id)?.isRead ? 'Mark Unread' : 'Mark Read'}
                       </button>
                       <UrgencyBadge urgency={classification.urgency} />
@@ -571,7 +571,7 @@ export default function InboxDashboard() {
                       <div className="flex items-center gap-1">
                         <input type="text" placeholder="Add tag..." value={newLabelText} onChange={e=>setNewLabelText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') addLabel();}} className="bg-transparent border border-white/5 text-[9px] px-1 py-0.5 rounded outline-none w-16" />
                       </div>
-                      <button onClick={() => handleDeleteThread(activeThread.id)} title="Delete Thread" className="text-gray-500 hover:text-red-400 transition-colors">
+                      <button onClick={() => handleDeleteThread(activeThread.id)} title="Move to Trash / Delete Thread" className="text-gray-500 hover:text-red-400 transition-colors">
                         <Trash2 size={13} />
                       </button>
                     </div>
