@@ -6,6 +6,8 @@ const { google } = require('googleapis');
 // For now, let's write routes structure with placeholder database logic
 const router = express.Router();
 
+const prisma = require('../config/db');
+
 // GET /auth/google
 router.get('/google', (req, res) => {
   const scopes = [
@@ -44,12 +46,37 @@ router.get('/callback', async (req, res) => {
     const name = userInfo.data.name;
     const picture = userInfo.data.picture;
 
-    // TODO: Store or upsert User in DB
-    // TODO: Store OAuth tokens (access_token, refresh_token, expires_at)
+    // Upsert User in DB
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { name, picture },
+      create: { email, name, picture }
+    });
+
+    // Store OAuth tokens
+    if (tokens.access_token) {
+      const expiresAt = tokens.expiry_date 
+        ? new Date(tokens.expiry_date) 
+        : new Date(Date.now() + 3600 * 1000); // fallback 1 hour
+
+      // Delete existing tokens for user to avoid token leakage/multi-tokens
+      await prisma.oAuthToken.deleteMany({
+        where: { userId: user.id }
+      });
+
+      await prisma.oAuthToken.create({
+        data: {
+          userId: user.id,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || '', // Google only returns refresh_token on prompt consent
+          expiresAt: expiresAt
+        }
+      });
+    }
     
     // Create JWT
     const token = jwt.sign(
-      { email, name, picture },
+      { id: user.id, email, name, picture },
       process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '7d' }
     );
@@ -59,7 +86,7 @@ router.get('/callback', async (req, res) => {
     res.redirect(`${frontendUrl}/login/callback?token=${token}`);
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.status(500).json({ error: 'Authentication failed' });
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`);
   }
 });
 

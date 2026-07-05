@@ -21,7 +21,7 @@ function getGeminiClient() {
 async function summarizeThread(threadContent) {
   try {
     const ai = getGeminiClient();
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const prompt = `You are a concise email assistant. Summarize the following email thread in exactly 3 sentences. 
 Focus on: what was asked, what was decided, and what needs to happen next.
 
@@ -48,7 +48,7 @@ Summary:`;
 async function generateDrafts(threadContent, tone = 'formal') {
   try {
     const ai = getGeminiClient();
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const prompt = `You are an email assistant. Generate 2 draft replies to this email thread.
 Match the sender's tone: ${tone} (formal/casual/urgent).
 Each reply should be concise, professional, and under 150 words.
@@ -76,7 +76,7 @@ Draft 2 (warmer):`;
 async function suggestFollowups(threadContent) {
   try {
     const ai = getGeminiClient();
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const prompt = `Based on this email thread, suggest 2-3 follow-up actions the recipient should take.
 Format as a short bullet list. Be specific and actionable.
 
@@ -102,7 +102,12 @@ Follow-up actions:`;
 async function classifyThread(threadContent) {
   try {
     const ai = getGeminiClient();
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+      }
+    });
     const prompt = `Classify this email thread on two dimensions:
 - Urgency: Low / Medium / High / Critical
 - Intent: Question / Request / Update / Action Required / FYI
@@ -116,12 +121,7 @@ Provide your output in valid JSON format matching this schema:
 Thread:
 ${threadContent}`;
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: 'application/json',
-      }
-    });
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const data = JSON.parse(response.text().trim());
     return data;

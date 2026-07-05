@@ -1,121 +1,167 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Mail, Send, ChevronRight, LogOut, Search, RefreshCw, 
   AlertCircle, Star, ArrowRight, CornerUpLeft, CheckCircle2, MessageSquare, Trash2
 } from 'lucide-react';
 import UrgencyBadge from '@/components/UrgencyBadge';
-
-const MOCK_THREADS = [
-  {
-    id: 'thread-1',
-    subject: 'Project Kickoff Meeting & Deliverables Schedule',
-    from: 'Sarah Connor <sarah@skynet.io>',
-    snippet: 'Hi team, let’s schedule our kickoff for next Monday. I need all engineering requirements doc by Friday evening so we can review before the call...',
-    urgency: 'High',
-    intent: 'Action Required',
-    date: '10:42 AM',
-    isRead: false,
-    body: [
-      { sender: 'Sarah Connor', time: '10:42 AM', content: 'Hi team, let’s schedule our kickoff for next Monday. I need all engineering requirements doc by Friday evening so we can review before the call. Let me know if you need templates.' }
-    ]
-  },
-  {
-    id: 'thread-2',
-    subject: 'Bug report: OAuth redirect failing on mobile safari browsers',
-    from: 'Devin Miller <devin.m@techops.org>',
-    snippet: 'Hey team, users are reporting infinite loops during callback login. Attached screenshot of console logs. Urgently need feedback...',
-    urgency: 'Critical',
-    intent: 'Request',
-    date: '9:15 AM',
-    isRead: false,
-    body: [
-      { sender: 'Devin Miller', time: '9:15 AM', content: 'Hey team, users are reporting infinite loops during callback login. Attached screenshot of console logs. Urgently need feedback, we are losing signups.' }
-    ]
-  },
-  {
-    id: 'thread-3',
-    subject: 'Weekly update: Performance dashboard is 10% faster!',
-    from: 'Alex Vance <alex.v@infra-core.com>',
-    snippet: 'Just deployed the database index improvements to production. Initial query benchmarks show response times cut by 150ms on average...',
-    urgency: 'Low',
-    intent: 'Update',
-    date: 'Yesterday',
-    isRead: true,
-    body: [
-      { sender: 'Alex Vance', time: 'Yesterday', content: 'Just deployed the database index improvements to production. Initial query benchmarks show response times cut by 150ms on average. Dashboard loading feels instantly snappy now.' }
-    ]
-  },
-  {
-    id: 'thread-4',
-    subject: 'Feedback request: New dashboard wireframes design',
-    from: 'Jessica Davis <jessica@pixelperfect.design>',
-    snippet: 'Hello! I updated the draft based on our whiteboard session. Check out the Figma link and add comments directly. Let’s align soon...',
-    urgency: 'Medium',
-    intent: 'Question',
-    date: 'Jul 3',
-    isRead: true,
-    body: [
-      { sender: 'Jessica Davis', time: 'Jul 3', content: 'Hello! I updated the draft based on our whiteboard session. Check out the Figma link and add comments directly. Let’s align soon so I can start high fidelity designs.' }
-    ]
-  }
-];
+import api from '@/lib/api';
 
 export default function InboxDashboard() {
-  const [threads, setThreads] = useState(MOCK_THREADS);
-  const [selectedId, setSelectedId] = useState('thread-1');
+  const [threads, setThreads] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [activeThread, setActiveThread] = useState(null);
   const [search, setSearch] = useState('');
   const [activeTone, setActiveTone] = useState('formal');
   const [replyText, setReplyText] = useState('');
-  const [aiGenerating, setAiGenerating] = useState(false);
+  
+  // Loaders
+  const [loading, setLoading] = useState(true);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [sending, setSending] = useState(false);
+  
+  // AI Insights
+  const [summary, setSummary] = useState('');
+  const [drafts, setDrafts] = useState(null);
+  const [followups, setFollowups] = useState([]);
+  const [classification, setClassification] = useState(null);
+  const [error, setError] = useState('');
 
-  // AI Output cache
-  const [summary, setSummary] = useState('Sarah is setting up a project kickoff meeting for next Monday. She needs all engineering requirement documents submitted by Friday. Template guides are available upon request.');
-  const [drafts, setDrafts] = useState({
-    formal: 'Dear Sarah,\n\nThank you for the update. I will prepare the engineering requirements documentation and ensure it is sent to you by Friday evening.\n\nBest regards,\nDemo User',
-    casual: 'Hey Sarah,\n\nSounds good! I will get the requirements docs over to you by Friday afternoon before the kickoff. Let me know if you need anything else.\n\nCheers,\nDemo',
-    urgent: 'Hi Sarah,\n\nGot it. I am prioritizing the requirements docs today and will make sure they are uploaded by Friday evening at the latest.\n\nThanks,\nDemo'
-  });
-  const [followups, setFollowups] = useState([
-    'Submit engineering requirements document before Friday evening.',
-    'Confirm availability for the Monday kickoff meeting.'
-  ]);
+  // Fetch threads on load
+  useEffect(() => {
+    fetchThreads();
+  }, []);
 
-  const selectedThread = threads.find(t => t.id === selectedId) || threads[0];
-
-  const handleSelectThread = (thread) => {
-    setSelectedId(thread.id);
-    // Simulate changing AI panel content
-    if (thread.id === 'thread-2') {
-      setSummary('Devin reports a critical crash in the OAuth redirect flow on mobile Safari. The team needs to troubleshoot redirect loops immediately to resolve user signup blocks.');
-      setDrafts({
-        formal: 'Dear Devin,\n\nThank you for reporting this. I will look into the Mobile Safari OAuth redirect logs immediately and follow up with a fix shortly.\n\nSincerely,\nDemo User',
-        casual: 'Hey Devin,\n\nThanks for flagging this. I am jumping on the mobile safari redirect loop bug right now. Will update you as soon as I push a patch.\n\nThanks,\nDemo',
-        urgent: 'Hi Devin,\n\nUnderstood. Investigating this redirect loop immediately. I expect to have a hotfix deployed within the next hour.\n\nBest,\nDemo'
-      });
-      setFollowups([
-        'Investigate mobile Safari console logs for OAuth redirect loop.',
-        'Deploy authentication hotfix.'
-      ]);
-    } else if (thread.id === 'thread-1') {
-      setSummary('Sarah is setting up a project kickoff meeting for next Monday. She needs all engineering requirement documents submitted by Friday. Template guides are available upon request.');
-      setDrafts({
-        formal: 'Dear Sarah,\n\nThank you for the update. I will prepare the engineering requirements documentation and ensure it is sent to you by Friday evening.\n\nBest regards,\nDemo User',
-        casual: 'Hey Sarah,\n\nSounds good! I will get the requirements docs over to you by Friday afternoon before the kickoff. Let me know if you need anything else.\n\nCheers,\nDemo',
-        urgent: 'Hi Sarah,\n\nGot it. I am prioritizing the requirements docs today and will make sure they are uploaded by Friday evening at the latest.\n\nThanks,\nDemo'
-      });
-      setFollowups([
-        'Submit engineering requirements document before Friday evening.',
-        'Confirm availability for the Monday kickoff meeting.'
-      ]);
+  const fetchThreads = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await api.get('/api/emails');
+      const items = res.data.threads || [];
+      setThreads(items);
+      if (items.length > 0) {
+        setSelectedId(items[0].id);
+        fetchThreadDetails(items[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching threads:', err);
+      setError('Could not retrieve emails. Make sure you are authenticated.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSync = () => {
+  const fetchThreadDetails = async (threadId) => {
+    try {
+      setThreadLoading(true);
+      setActiveThread(null);
+      setSummary('');
+      setDrafts(null);
+      setFollowups([]);
+      setClassification(null);
+
+      const res = await api.get(`/api/emails/${threadId}`);
+      setActiveThread(res.data);
+      
+      // Concatenate messages content for AI processing
+      const content = res.data.messages.map(m => `${m.sender}: ${m.content}`).join('\n\n');
+      
+      // Load AI insights in parallel
+      generateAIInsights(content);
+    } catch (err) {
+      console.error('Error fetching thread details:', err);
+    } finally {
+      setThreadLoading(false);
+    }
+  };
+
+  const generateAIInsights = async (threadContent) => {
+    try {
+      setAiLoading(true);
+      
+      // Run AI calls in parallel
+      const [summaryRes, draftRes, followupRes, classifyRes] = await Promise.all([
+        api.post('/api/ai/summarize', { threadContent }).catch(e => ({ data: { summary: 'Summary unavailable.' } })),
+        api.post('/api/ai/draft', { threadContent, tone: 'formal' }).catch(e => null),
+        api.post('/api/ai/followup', { threadContent }).catch(e => ({ data: { followups: '• No suggested actions.' } })),
+        api.post('/api/ai/classify', { threadContent }).catch(e => ({ data: { urgency: 'Medium', intent: 'Update' } }))
+      ]);
+
+      setSummary(summaryRes.data.summary);
+      
+      // Process bullet points from followups response
+      const bulletPoints = followupRes.data.followups
+        .split('\n')
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0);
+      setFollowups(bulletPoints);
+
+      setClassification(classifyRes.data);
+
+      // Parse drafts if available
+      if (draftRes && draftRes.data.drafts) {
+        const rawText = draftRes.data.drafts;
+        
+        // Simple draft split parser for Direct vs Warmer formats from prompt
+        // Let's create casual, formal, urgent fallbacks
+        const d1Match = rawText.match(/Draft 1[\s\S]*?(?=Draft 2|$)/i);
+        const d2Match = rawText.match(/Draft 2[\s\S]*$/i);
+        
+        const d1 = d1Match ? d1Match[0].replace(/Draft 1\s*\(direct\):?/i, '').trim() : '';
+        const d2 = d2Match ? d2Match[0].replace(/Draft 2\s*\(warmer\):?/i, '').trim() : '';
+
+        setDrafts({
+          formal: d1 || rawText,
+          casual: d2 || rawText,
+          urgent: d1 || rawText
+        });
+        
+        setReplyText(d1 || rawText);
+      } else {
+        // Fallback drafts
+        setDrafts({
+          formal: 'Dear Sender,\n\nI received your email and will follow up shortly.\n\nBest regards.',
+          casual: 'Hi there,\n\nThanks for the email. Talk to you soon!',
+          urgent: 'Hi,\n\nGot it. Will get back to you as soon as possible.'
+        });
+        setReplyText('Dear Sender,\n\nI received your email and will follow up shortly.\n\nBest regards.');
+      }
+    } catch (err) {
+      console.error('AI Insights failed:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSelectThread = (thread) => {
+    setSelectedId(thread.id);
+    fetchThreadDetails(thread.id);
+  };
+
+  const handleSync = async () => {
     setSyncing(true);
-    setTimeout(() => setSyncing(false), 1200);
+    await fetchThreads();
+    setSyncing(false);
+  };
+
+  const handleSendReply = async () => {
+    if (!replyText || sending) return;
+    try {
+      setSending(true);
+      await api.post(`/api/emails/${selectedId}/send`, { body: replyText });
+      alert('Reply sent successfully via Gmail API!');
+      setReplyText('');
+      // Reload details to show the new message
+      fetchThreadDetails(selectedId);
+    } catch (err) {
+      console.error('Failed to send reply:', err);
+      alert('Error sending reply.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -125,9 +171,6 @@ export default function InboxDashboard() {
         <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <Sparkles size={12} className="text-white" />
-              </div>
               <span className="font-bold text-white text-sm">MailAI</span>
             </div>
             {/* Search */}
@@ -151,7 +194,10 @@ export default function InboxDashboard() {
               <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} /> Sync
             </button>
             <button 
-              onClick={() => window.location.href = '/login'}
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-500 hover:text-red-400 text-xs transition-colors"
             >
               <LogOut size={12} /> Logout
@@ -162,6 +208,7 @@ export default function InboxDashboard() {
 
       {/* ── Dashboard Grid ── */}
       <div className="flex-1 flex overflow-hidden">
+        
         {/* Left Side: Threads List */}
         <div className="w-full md:w-[350px] lg:w-[400px] border-r border-white/5 flex flex-col shrink-0">
           <div className="p-4 border-b border-white/5 flex items-center justify-between">
@@ -172,60 +219,83 @@ export default function InboxDashboard() {
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-            {threads
-              .filter(t => t.subject.toLowerCase().includes(search.toLowerCase()) || t.from.toLowerCase().includes(search.toLowerCase()))
-              .map(t => (
-                <div 
-                  key={t.id}
-                  onClick={() => handleSelectThread(t)}
-                  className={`p-4 cursor-pointer transition-all duration-150 relative ${
-                    selectedId === t.id ? 'bg-white/5 border-l-2 border-indigo-500' : 'hover:bg-white/[0.02]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xs truncate ${!t.isRead ? 'text-white font-bold' : 'text-gray-400'}`}>
-                      {t.from.split(' <')[0]}
-                    </span>
-                    <span className="text-[10px] text-gray-600 font-medium shrink-0">{t.date}</span>
+            {loading ? (
+              <div className="p-8 text-center text-xs text-gray-500 flex flex-col items-center gap-2">
+                <RefreshCw size={14} className="animate-spin text-indigo-500" />
+                Loading your inbox...
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center text-xs text-red-400 flex flex-col items-center gap-2">
+                <AlertCircle size={14} />
+                {error}
+              </div>
+            ) : threads.length === 0 ? (
+              <div className="p-8 text-center text-xs text-gray-500">
+                No threads found in your inbox.
+              </div>
+            ) : (
+              threads
+                .filter(t => t.subject.toLowerCase().includes(search.toLowerCase()) || t.from.toLowerCase().includes(search.toLowerCase()))
+                .map(t => (
+                  <div 
+                    key={t.id}
+                    onClick={() => handleSelectThread(t)}
+                    className={`p-4 cursor-pointer transition-all duration-150 relative ${
+                      selectedId === t.id ? 'bg-white/5 border-l-2 border-indigo-500' : 'hover:bg-white/[0.02]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs truncate max-w-[200px] ${!t.isRead ? 'text-white font-bold' : 'text-gray-400'}`}>
+                        {t.from.split(' <')[0]}
+                      </span>
+                      <span className="text-[10px] text-gray-600 font-medium shrink-0">{t.date}</span>
+                    </div>
+                    <h3 className={`text-xs truncate mb-1 ${!t.isRead ? 'text-white font-bold' : 'text-gray-300'}`}>
+                      {t.subject}
+                    </h3>
+                    <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                      {t.snippet}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <UrgencyBadge urgency={t.urgency} />
+                      <span className="text-[9px] text-gray-600 bg-white/5 px-2 py-0.5 rounded-md border border-white/5 font-semibold">
+                        {t.intent}
+                      </span>
+                    </div>
                   </div>
-                  <h3 className={`text-xs truncate mb-1 ${!t.isRead ? 'text-white font-bold' : 'text-gray-300'}`}>
-                    {t.subject}
-                  </h3>
-                  <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
-                    {t.snippet}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <UrgencyBadge urgency={t.urgency} />
-                    <span className="text-[9px] text-gray-600 bg-white/5 px-2 py-0.5 rounded-md border border-white/5 font-semibold">
-                      {t.intent}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+            )}
           </div>
         </div>
 
         {/* Center: Thread Viewer & Reply */}
-        <div className="flex-1 flex flex-col bg-gray-950 overflow-hidden">
-          {selectedThread ? (
+        <div className="flex-1 flex flex-col bg-gray-950 overflow-hidden border-r border-white/5">
+          {threadLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-2">
+              <RefreshCw size={18} className="animate-spin text-indigo-500" />
+              <span>Loading messages...</span>
+            </div>
+          ) : activeThread ? (
             <>
               {/* Thread header */}
               <div className="p-4 border-b border-white/5">
-                <h1 className="text-sm font-bold text-white mb-1">{selectedThread.subject}</h1>
+                <h1 className="text-sm font-bold text-white mb-1">{activeThread.subject}</h1>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">{selectedThread.from}</span>
-                  <div className="flex items-center gap-2">
-                    <UrgencyBadge urgency={selectedThread.urgency} />
-                    <span className="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-0.5 rounded-md">
-                      {selectedThread.intent}
-                    </span>
-                  </div>
+                  <span className="text-xs text-gray-400">{activeThread.from}</span>
+                  {classification && (
+                    <div className="flex items-center gap-2">
+                      <UrgencyBadge urgency={classification.urgency} />
+                      <span className="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                        {classification.intent}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Thread Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {selectedThread.body.map((msg, i) => (
+                {activeThread.messages.map((msg, i) => (
                   <div key={i} className="bg-gray-900 border border-white/5 rounded-2xl p-4 space-y-2">
                     <div className="flex justify-between border-b border-white/5 pb-2">
                       <span className="text-xs font-bold text-indigo-400">{msg.sender}</span>
@@ -242,7 +312,7 @@ export default function InboxDashboard() {
               <div className="p-4 border-t border-white/5 space-y-3 bg-gray-900/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-xs text-gray-400">
-                    <CornerUpLeft size={12} /> Reply to {selectedThread.from.split(' <')[0]}
+                    <CornerUpLeft size={12} /> Reply to {activeThread.from.split(' <')[0]}
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Tone selectors */}
@@ -251,7 +321,7 @@ export default function InboxDashboard() {
                         key={t}
                         onClick={() => {
                           setActiveTone(t);
-                          setReplyText(drafts[t] || '');
+                          if (drafts) setReplyText(drafts[t] || '');
                         }}
                         className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider border transition-all ${
                           activeTone === t 
@@ -268,13 +338,13 @@ export default function InboxDashboard() {
                 <textarea
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
-                  placeholder="Select a tone template or draft your reply here..."
+                  placeholder="Draft your reply here..."
                   className="w-full bg-gray-800/60 border border-white/5 text-white placeholder-gray-650 text-xs rounded-xl p-3 h-28 outline-none focus:border-white/10 transition-all resize-none"
                 />
 
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-gray-600">
-                    Drafted with Gemini AI co-pilot
+                    Co-pilot Powered by Google Gemini AI
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -284,13 +354,11 @@ export default function InboxDashboard() {
                       Clear
                     </button>
                     <button
-                      onClick={() => {
-                        alert('Reply sent successfully!');
-                        setReplyText('');
-                      }}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-650 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-indigo-500/10"
+                      onClick={handleSendReply}
+                      disabled={sending || !replyText}
+                      className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-655 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-indigo-500/10 disabled:opacity-50"
                     >
-                      Send <Send size={11} />
+                      {sending ? 'Sending...' : 'Send'} <Send size={11} />
                     </button>
                   </div>
                 </div>
@@ -305,77 +373,92 @@ export default function InboxDashboard() {
         </div>
 
         {/* Right Side: AI Panel */}
-        <div className="w-[300px] border-l border-white/5 bg-gray-900/20 hidden lg:flex flex-col overflow-y-auto">
+        <div className="w-[300px] bg-gray-950 hidden lg:flex flex-col overflow-y-auto">
           <div className="p-4 border-b border-white/5 flex items-center gap-1.5">
-            <Sparkles size={14} className="text-indigo-400" />
+            <Sparkles size={14} className="text-indigo-400 animate-pulse" />
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Copilot Insights</h2>
           </div>
 
           <div className="p-4 space-y-5">
-            {/* Urgency Alert banner */}
-            {selectedThread && selectedThread.urgency === 'Critical' && (
-              <div className="flex items-start gap-2.5 p-3 bg-red-950/20 border border-red-500/10 rounded-xl">
-                <AlertCircle size={13} className="text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-red-300 text-[11px] font-bold">Action Required Immediately</p>
-                  <p className="text-red-400/70 text-[10px] mt-0.5">This thread involves signup issues and customer dropout.</p>
-                </div>
+            {aiLoading ? (
+              <div className="py-12 text-center text-xs text-gray-500 flex flex-col items-center gap-2">
+                <RefreshCw size={14} className="animate-spin text-indigo-500" />
+                Analyzing thread with Gemini...
               </div>
-            )}
-
-            {/* Summarizer */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Thread Summary
-              </h3>
-              <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 text-xs text-gray-400 leading-relaxed">
-                {summary || 'Loading summary...'}
-              </div>
-            </div>
-
-            {/* Suggested actions */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Suggested Tasks
-              </h3>
-              <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 space-y-2.5 text-xs text-gray-400">
-                {followups.map((act, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span className="text-emerald-400 font-bold">•</span>
-                    <span>{act}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tone selector preview drafts */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Insert Draft
-              </h3>
-              <div className="space-y-2">
-                {['formal', 'casual', 'urgent'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setActiveTone(t);
-                      setReplyText(drafts[t] || '');
-                    }}
-                    className="w-full text-left bg-gray-900 hover:bg-gray-850 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-all space-y-1.5 group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-indigo-400 transition-colors">
-                        {t} tone
-                      </span>
-                      <ChevronRight size={10} className="text-gray-700" />
+            ) : (
+              <>
+                {/* Urgency Alert banner */}
+                {classification && (classification.urgency === 'Critical' || classification.urgency === 'High') && (
+                  <div className="flex items-start gap-2.5 p-3 bg-red-950/20 border border-red-500/10 rounded-xl">
+                    <AlertCircle size={13} className="text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-red-300 text-[11px] font-bold">Action Required Immediately</p>
+                      <p className="text-red-400/70 text-[10px] mt-0.5">Gemini classified this thread as priority.</p>
                     </div>
-                    <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
-                      {drafts[t]}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
+                  </div>
+                )}
+
+                {/* Summarizer */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Thread Summary
+                  </h3>
+                  <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 text-xs text-gray-400 leading-relaxed">
+                    {summary || 'No summary generated.'}
+                  </div>
+                </div>
+
+                {/* Suggested actions */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Suggested Tasks
+                  </h3>
+                  <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 space-y-2.5 text-xs text-gray-400">
+                    {followups.length > 0 ? (
+                      followups.map((act, i) => (
+                        <div key={i} className="flex gap-2">
+                          <span className="text-emerald-400 font-bold">•</span>
+                          <span>{act}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-600">No suggestions.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tone selector preview drafts */}
+                {drafts && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Insert Draft
+                    </h3>
+                    <div className="space-y-2">
+                      {['formal', 'casual', 'urgent'].map(t => (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            setActiveTone(t);
+                            setReplyText(drafts[t] || '');
+                          }}
+                          className="w-full text-left bg-gray-900 hover:bg-gray-850 border border-white/5 hover:border-white/10 rounded-xl p-3 transition-all space-y-1.5 group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider group-hover:text-indigo-400 transition-colors">
+                              {t} tone
+                            </span>
+                            <ChevronRight size={10} className="text-gray-700" />
+                          </div>
+                          <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
+                            {drafts[t]}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
