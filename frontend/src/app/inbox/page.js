@@ -683,7 +683,8 @@ export default function InboxDashboard() {
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     placeholder="Draft your reply here..."
-                    className="w-full bg-gray-800/60 border border-white/5 text-white placeholder-gray-650 text-xs rounded-xl p-3 h-28 outline-none focus:border-white/10 transition-all resize-none"
+                    rows={Math.max(4, Math.min(10, Math.ceil(replyText.split('\n').length || 1)))}
+                    className="w-full bg-gray-800/60 border border-white/5 text-white placeholder-gray-650 text-xs rounded-xl p-3 outline-none focus:border-white/10 transition-all resize-none"
                   />
 
                   <div className="flex items-center justify-between">
