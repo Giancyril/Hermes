@@ -115,6 +115,7 @@ export default function InboxDashboard() {
   const [sending, setSending] = useState(false);
   const [draftsLoading, setDraftsLoading] = useState({ formal: false, casual: false, urgent: false });
   const [copied, setCopied] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [customDirectives, setCustomDirectives] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [translating, setTranslating] = useState(false);
@@ -372,6 +373,11 @@ export default function InboxDashboard() {
     setNewLabelText('');
   };
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(replyText);
     setCopied(true);
@@ -383,13 +389,13 @@ export default function InboxDashboard() {
     try {
       setSending(true);
       await api.post(`/api/emails/${selectedId}/send`, { body: replyText });
-      alert('Reply sent successfully via Gmail API!');
+      showToast('Reply sent successfully via Gmail API!');
       setReplyText('');
       // Reload details to show the new message
       fetchThreadDetails(selectedId);
     } catch (err) {
       console.error('Failed to send reply:', err);
-      alert('Error sending reply.');
+      showToast('Error sending reply.');
     } finally {
       setSending(false);
     }
@@ -812,6 +818,13 @@ export default function InboxDashboard() {
               <div className="flex justify-between"><span>Clear Reply text</span><kbd className="bg-white/5 px-2 py-0.5 rounded text-[10px] border border-white/5 font-mono text-white">Esc</kbd></div>
             </div>
           </div>
+        </div>
+      )}
+      {/* Premium Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-50 bg-indigo-600 border border-indigo-500 text-white rounded-xl px-4 py-2.5 text-xs shadow-xl flex items-center gap-2 animate-bounce">
+          <CheckCircle2 size={12} className="text-emerald-300" />
+          {toastMessage}
         </div>
       )}
     </div>
