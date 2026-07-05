@@ -156,7 +156,7 @@ export default function InboxDashboard() {
   useEffect(() => {
     const handleKeys = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      
+
       if (e.key === 'j' || e.key === 'ArrowDown') {
         e.preventDefault();
         const idx = threads.findIndex(t => t.id === selectedId);
@@ -193,7 +193,7 @@ export default function InboxDashboard() {
       setError('Could not retrieve emails. Make sure you are authenticated.');
     } finally {
       setLoading(false);
-      setLastSyncTime(new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+      setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
   };
 
@@ -327,7 +327,7 @@ export default function InboxDashboard() {
   const handleExportSummary = () => {
     if (!summary) return;
     const element = document.createElement('a');
-    const file = new Blob([`Subject: ${activeThread?.subject}\nFrom: ${activeThread?.from}\n\nAI THREAD SUMMARY:\n${summary}`], {type: 'text/plain'});
+    const file = new Blob([`Subject: ${activeThread?.subject}\nFrom: ${activeThread?.from}\n\nAI THREAD SUMMARY:\n${summary}`], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `summary-${selectedId}.txt`;
     document.body.appendChild(element);
@@ -575,12 +575,11 @@ export default function InboxDashboard() {
                         <Paperclip size={10} className="text-gray-500 shrink-0" title="Contains attachments" />
                       )}
                       <UrgencyBadge urgency={t.urgency} />
-                      <span className={`text-[9px] px-2 py-0.5 rounded-md border font-semibold ${
-                        t.intent === 'Question' ? 'bg-blue-500/10 border-blue-550/20 text-blue-400' :
-                        t.intent === 'Request' ? 'bg-purple-500/10 border-purple-550/20 text-purple-400' :
-                        t.intent === 'Update' ? 'bg-gray-500/10 border-gray-550/20 text-gray-400' :
-                        'bg-emerald-500/10 border-emerald-550/20 text-emerald-400'
-                      }`}>
+                      <span className={`text-[9px] px-2 py-0.5 rounded-md border font-semibold ${t.intent === 'Question' ? 'bg-blue-500/10 border-blue-550/20 text-blue-400' :
+                          t.intent === 'Request' ? 'bg-purple-500/10 border-purple-550/20 text-purple-400' :
+                            t.intent === 'Update' ? 'bg-gray-500/10 border-gray-550/20 text-gray-400' :
+                              'bg-emerald-500/10 border-emerald-550/20 text-emerald-400'
+                        }`}>
                         {t.intent}
                       </span>
                     </div>
@@ -619,7 +618,7 @@ export default function InboxDashboard() {
                         {classification.intent}
                       </span>
                       <div className="flex items-center gap-1">
-                        <input type="text" placeholder="Add tag..." value={newLabelText} onChange={e=>setNewLabelText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') addLabel();}} className="bg-transparent border border-white/5 text-[9px] px-1 py-0.5 rounded outline-none w-16" />
+                        <input type="text" placeholder="Add tag..." value={newLabelText} onChange={e => setNewLabelText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addLabel(); }} className="bg-transparent border border-white/5 text-[9px] px-1 py-0.5 rounded outline-none w-16" />
                       </div>
                       <button onClick={() => handleDeleteThread(activeThread.id)} title="Move to Trash / Delete Thread" className="text-gray-500 hover:text-red-400 transition-colors">
                         <Trash2 size={13} />
@@ -725,9 +724,9 @@ export default function InboxDashboard() {
                   <textarea
                     value={replyText}
                     onChange={e => {
-                    setReplyText(e.target.value);
-                    if (selectedId) localStorage.setItem('draft_' + selectedId, e.target.value);
-                  }}
+                      setReplyText(e.target.value);
+                      if (selectedId) localStorage.setItem('draft_' + selectedId, e.target.value);
+                    }}
                     placeholder="Draft your reply here..."
                     rows={Math.max(4, Math.min(10, Math.ceil(replyText.split('\n').length || 1)))}
                     className="w-full bg-gray-800/60 border border-white/5 text-white placeholder-gray-650 text-xs rounded-xl p-3 outline-none focus:border-white/10 transition-all resize-none"
@@ -818,21 +817,21 @@ export default function InboxDashboard() {
                     </h3>
                     {summary && (
                       <div className="flex items-center gap-2">
-                      <CustomSelectDropdown
-                        value={summaryLength}
-                        onChange={(val) => setSummaryLength(val)}
-                        placeholder="Med"
-                        options={[
-                          { value: "short", label: "Short" },
-                          { value: "medium", label: "Med" },
-                          { value: "long", label: "Long" }
-                        ]}
-                        className="w-16"
-                      />
-                      <button onClick={handleExportSummary} title="Export to TXT" className="text-gray-500 hover:text-white transition-colors">
-                        <Download size={11} />
-                      </button>
-                    </div>
+                        <CustomSelectDropdown
+                          value={summaryLength}
+                          onChange={(val) => setSummaryLength(val)}
+                          placeholder="Med"
+                          options={[
+                            { value: "short", label: "Short" },
+                            { value: "medium", label: "Med" },
+                            { value: "long", label: "Long" }
+                          ]}
+                          className="w-16"
+                        />
+                        <button onClick={handleExportSummary} title="Export to TXT" className="text-gray-500 hover:text-white transition-colors">
+                          <Download size={11} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 text-xs text-gray-400 leading-relaxed">
