@@ -115,6 +115,7 @@ export default function InboxDashboard() {
   const [sending, setSending] = useState(false);
   const [draftsLoading, setDraftsLoading] = useState({ formal: false, casual: false, urgent: false });
   const [copied, setCopied] = useState(false);
+  const [summaryLength, setSummaryLength] = useState('medium');
   const [toastMessage, setToastMessage] = useState('');
   const [customDirectives, setCustomDirectives] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -215,7 +216,7 @@ export default function InboxDashboard() {
 
       // Run AI calls in parallel
       const [summaryRes, draftRes, followupRes, classifyRes] = await Promise.all([
-        api.post('/api/ai/summarize', { threadContent, customDirectives }).catch(e => ({ data: { summary: 'Summary unavailable.' } })),
+        api.post('/api/ai/summarize', { threadContent, customDirectives, length: summaryLength }).catch(e => ({ data: { summary: 'Summary unavailable.' } })),
         api.post('/api/ai/draft', { threadContent, tone: 'formal', customDirectives }).catch(e => null),
         api.post('/api/ai/followup', { threadContent }).catch(e => ({ data: { followups: '• No suggested actions.' } })),
         api.post('/api/ai/classify', { threadContent }).catch(e => ({ data: { urgency: 'Medium', intent: 'Update' } }))
@@ -694,9 +695,16 @@ export default function InboxDashboard() {
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Thread Summary
                     </h3>
                     {summary && (
+                      <div className="flex items-center gap-2">
+                      <select value={summaryLength} onChange={(e) => setSummaryLength(e.target.value)} className="bg-transparent border border-white/5 text-[9px] text-gray-500 outline-none rounded cursor-pointer">
+                        <option value="short" className="bg-gray-900">Short</option>
+                        <option value="medium" className="bg-gray-900">Med</option>
+                        <option value="long" className="bg-gray-900">Long</option>
+                      </select>
                       <button onClick={handleExportSummary} title="Export to TXT" className="text-gray-500 hover:text-white transition-colors">
                         <Download size={11} />
                       </button>
+                    </div>
                     )}
                   </div>
                   <div className="bg-gray-900 border border-white/5 rounded-xl p-3.5 text-xs text-gray-400 leading-relaxed">

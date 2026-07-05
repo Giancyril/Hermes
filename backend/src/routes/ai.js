@@ -6,12 +6,12 @@ const router = express.Router();
 // POST /api/ai/summarize
 router.post('/summarize', authMiddleware, async (req, res) => {
   try {
-    const { threadContent, customDirectives } = req.body;
+    const { threadContent, customDirectives, length } = req.body;
     if (!threadContent) {
       return res.status(400).json({ error: 'Thread content is required' });
     }
 
-    const summary = await summarizeThread(threadContent, customDirectives);
+    const summary = await summarizeThread(threadContent, customDirectives, length);
     res.json({ summary });
   } catch (error) {
     console.error('Summarize error:', error);

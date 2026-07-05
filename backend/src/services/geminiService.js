@@ -18,12 +18,13 @@ function getGeminiClient() {
  * @param {string} threadContent - Concatenated string of thread messages.
  * @returns {Promise<string>} Three-sentence summary.
  */
-async function summarizeThread(threadContent, customDirectives = '') {
+async function summarizeThread(threadContent, customDirectives = '', length = 'medium') {
+  const lengthPrompt = length === 'short' ? 'in exactly 1 brief sentence' : length === 'long' ? 'in a detailed paragraph' : 'in exactly 3 sentences';
   const directivesPrompt = customDirectives ? `\nAdditional directives: ${customDirectives}` : '';
   try {
     const ai = getGeminiClient();
     const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const prompt = `You are a concise email assistant. Summarize the following email thread in exactly 3 sentences. 
+    const prompt = `You are a concise email assistant. Summarize the following email thread in ${lengthPrompt}. 
 Focus on: what was asked, what was decided, and what needs to happen next.
 
 Thread:
