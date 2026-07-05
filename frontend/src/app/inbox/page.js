@@ -278,6 +278,15 @@ export default function InboxDashboard() {
     document.body.removeChild(element);
   };
 
+  const toggleReadStatus = (threadId) => {
+    setThreads(prev =>
+      prev.map(t => (t.id === threadId ? { ...t, isRead: !t.isRead } : t))
+    );
+    if (activeThread && activeThread.id === threadId) {
+      // toggle local active thread status visual indicator if any
+    }
+  };
+
   const toggleStar = (threadId) => {
     setStarredThreads(prev => ({
       ...prev,
@@ -441,6 +450,9 @@ export default function InboxDashboard() {
                   <span className="text-xs text-gray-400">{activeThread.from}</span>
                   {classification && (
                     <div className="flex items-center gap-2">
+                      <button onClick={() => toggleReadStatus(activeThread.id)} title="Toggle Read/Unread" className="px-2 py-0.5 rounded bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] text-gray-400 hover:text-white transition-all">
+                        {threads.find(x => x.id === activeThread.id)?.isRead ? 'Mark Unread' : 'Mark Read'}
+                      </button>
                       <UrgencyBadge urgency={classification.urgency} />
                       <span className="text-[10px] text-gray-500 font-bold bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                         {classification.intent}
