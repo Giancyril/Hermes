@@ -208,6 +208,8 @@ export default function InboxDashboard() {
 
       const res = await api.get(`/api/emails/${threadId}`);
       setActiveThread(res.data);
+      const savedDraft = localStorage.getItem('draft_' + threadId);
+      if (savedDraft) setReplyText(savedDraft);
 
       // Concatenate messages content for AI processing
       const content = res.data.messages.map(m => `${m.sender}: ${m.content}`).join('\n\n');
@@ -702,7 +704,10 @@ export default function InboxDashboard() {
 
                   <textarea
                     value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
+                    onChange={e => {
+                    setReplyText(e.target.value);
+                    if (selectedId) localStorage.setItem('draft_' + selectedId, e.target.value);
+                  }}
                     placeholder="Draft your reply here..."
                     rows={Math.max(4, Math.min(10, Math.ceil(replyText.split('\n').length || 1)))}
                     className="w-full bg-gray-800/60 border border-white/5 text-white placeholder-gray-650 text-xs rounded-xl p-3 outline-none focus:border-white/10 transition-all resize-none"
