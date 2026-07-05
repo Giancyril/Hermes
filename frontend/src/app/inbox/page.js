@@ -634,13 +634,24 @@ export default function InboxDashboard() {
                       <span className="text-xs font-bold text-indigo-400">{msg.sender}</span>
                       <span className="text-[10px] text-gray-600">{msg.time}</span>
                     </div>
-                    {msg.htmlContent ? (
-                      <SafeHtmlViewer html={msg.htmlContent} id={msg.id} />
-                    ) : (
-                      <p className={`text-gray-300 leading-relaxed whitespace-pre-wrap ${textSize === 'small' ? 'text-[11px]' : textSize === 'large' ? 'text-sm' : 'text-xs'}`}>
-                        {msg.content}
-                      </p>
-                    )}
+                    <div>
+                      {msg.htmlContent ? (
+                        <SafeHtmlViewer html={msg.htmlContent} id={msg.id} />
+                      ) : (
+                        <p className={`text-gray-300 leading-relaxed whitespace-pre-wrap ${textSize === 'small' ? 'text-[11px]' : textSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                          {msg.content}
+                        </p>
+                      )}
+                      {(msg.content.toLowerCase().includes('pdf') || msg.content.toLowerCase().includes('invoice') || msg.content.toLowerCase().includes('file')) && (
+                        <div className="mt-3 p-2.5 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between max-w-xs cursor-pointer hover:bg-white/[0.08] transition-all">
+                          <div className="flex items-center gap-2">
+                            <Paperclip size={12} className="text-indigo-400" />
+                            <div className="flex flex-col"><span className="text-[10px] text-gray-300 font-bold font-mono">attachment-invoice.pdf</span><span className="text-[8px] text-gray-600">1.2 MB</span></div>
+                          </div>
+                          <Download size={11} className="text-gray-500" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
 
