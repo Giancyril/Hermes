@@ -111,6 +111,7 @@ export default function InboxDashboard() {
   const [draftsLoading, setDraftsLoading] = useState({ formal: false, casual: false, urgent: false });
   const [copied, setCopied] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [starredThreads, setStarredThreads] = useState({});
 
   // AI Insights
   const [summary, setSummary] = useState('');
@@ -277,6 +278,13 @@ export default function InboxDashboard() {
     document.body.removeChild(element);
   };
 
+  const toggleStar = (threadId) => {
+    setStarredThreads(prev => ({
+      ...prev,
+      [threadId]: !prev[threadId]
+    }));
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(replyText);
     setCopied(true);
@@ -386,9 +394,12 @@ export default function InboxDashboard() {
                       }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs truncate max-w-[200px] ${!t.isRead ? 'text-white font-bold' : 'text-gray-400'}`}>
-                        {t.from.split(' <')[0]}
-                      </span>
+                      <div className="flex items-center gap-1.5 truncate max-w-[200px]">
+                        {starredThreads[t.id] && <Star size={10} className="fill-amber-400 text-amber-400 shrink-0" />}
+                        <span className={`text-xs truncate ${!t.isRead ? 'text-white font-bold' : 'text-gray-400'}`}>
+                          {t.from.split(' <')[0]}
+                        </span>
+                      </div>
                       <span className="text-[10px] text-gray-600 font-medium shrink-0">{t.date}</span>
                     </div>
                     <h3 className={`text-xs truncate mb-1 ${!t.isRead ? 'text-white font-bold' : 'text-gray-300'}`}>
@@ -420,7 +431,12 @@ export default function InboxDashboard() {
             <>
               {/* Thread header */}
               <div className="p-4 border-b border-white/5">
-                <h1 className="text-sm font-bold text-white mb-1">{activeThread.subject}</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <button onClick={() => toggleStar(activeThread.id)} className="transition-colors">
+                    <Star size={14} className={starredThreads[activeThread.id] ? "fill-amber-400 text-amber-400" : "text-gray-500 hover:text-amber-400"} />
+                  </button>
+                  <h1 className="text-sm font-bold text-white">{activeThread.subject}</h1>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">{activeThread.from}</span>
                   {classification && (
