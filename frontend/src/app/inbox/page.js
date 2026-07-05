@@ -8,71 +8,78 @@ import {
 import UrgencyBadge from '@/components/UrgencyBadge';
 import api from '@/lib/api';
 
-const SafeHtmlViewer = ({ html }) => {
-  const iframeRef = React.useRef(null);
+const SafeHtmlViewer = ({ html, id }) => {
+  const [height, setHeight] = React.useState('150px');
 
   React.useEffect(() => {
-    if (iframeRef.current) {
-      const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
-      doc.open();
-      
-      const styledHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body {
-              margin: 0;
-              padding: 16px;
-              background-color: #ffffff;
-              color: #1a1a1a;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              font-size: 14px;
-              line-height: 1.6;
-            }
-            img {
-              max-width: 100% !important;
-              height: auto !important;
-            }
-            a {
-              color: #2563eb;
-              text-decoration: underline;
-            }
-            table {
-              max-width: 100% !important;
-              width: 100% !important;
-            }
-          </style>
-        </head>
-        <body>
-          ${html}
-        </body>
-        </html>
-      `;
-      doc.write(styledHtml);
-      doc.close();
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'resize-email-iframe' && event.data.id === id) {
+        setHeight(`${event.data.height + 24}px`);
+      }
+    };
 
-      const resizeIframe = () => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-          iframeRef.current.style.height = '0px';
-          iframeRef.current.style.height = `${iframeRef.current.contentWindow.document.body.scrollHeight + 32}px`;
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [id]);
+
+  const styledHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          margin: 0;
+          padding: 16px;
+          background-color: #ffffff;
+          color: #1a1a1a;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          font-size: 14px;
+          line-height: 1.6;
         }
-      };
-
-      iframeRef.current.addEventListener('load', resizeIframe);
-      const timer = setTimeout(resizeIframe, 150);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [html]);
+        img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        a {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+        table {
+          max-width: 100% !important;
+          width: 100% !important;
+        }
+      </style>
+      <script>
+        function sendHeight() {
+          const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+          window.parent.postMessage({
+            type: 'resize-email-iframe',
+            id: '${id}',
+            height: height
+          }, '*');
+        }
+        window.addEventListener('load', sendHeight);
+        window.addEventListener('resize', sendHeight);
+        document.addEventListener('DOMContentLoaded', sendHeight);
+      </script>
+    </head>
+    <body>
+      ${html}
+      <script>
+        setTimeout(sendHeight, 200);
+      </script>
+    </body>
+    </html>
+  `;
 
   return (
     <iframe
-      ref={iframeRef}
-      sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts"
+      srcDoc={styledHtml}
+      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       className="w-full border-0 rounded-xl bg-white"
-      style={{ minHeight: '150px', transition: 'height 0.2s ease' }}
+      style={{ height, transition: 'height 0.15s ease' }}
     />
   );
 };
@@ -401,7 +408,7 @@ export default function InboxDashboard() {
                       <span className="text-[10px] text-gray-600">{msg.time}</span>
                     </div>
                     {msg.htmlContent ? (
-                      <SafeHtmlViewer html={msg.htmlContent} />
+                      <SafeHtmlViewer html={msg.htmlContent} id={msg.id} />
                     ) : (
                       <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
                         {msg.content}
