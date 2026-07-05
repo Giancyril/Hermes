@@ -114,6 +114,7 @@ export default function InboxDashboard() {
   const [starredThreads, setStarredThreads] = useState({});
   const [searchHistory, setSearchHistory] = useState(['invoice', 'meeting', 'action required']);
   const [showHistory, setShowHistory] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState('Just now');
 
   // AI Insights
   const [summary, setSummary] = useState('');
@@ -143,6 +144,7 @@ export default function InboxDashboard() {
       setError('Could not retrieve emails. Make sure you are authenticated.');
     } finally {
       setLoading(false);
+      setLastSyncTime(new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
     }
   };
 
@@ -373,6 +375,7 @@ export default function InboxDashboard() {
             >
               <HelpCircle size={13} />
             </button>
+            <span className="text-[10px] text-gray-600 hidden sm:inline">Last sync: {lastSyncTime}</span>
             <button
               onClick={handleSync}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 text-xs text-gray-400 hover:text-white transition-colors"
