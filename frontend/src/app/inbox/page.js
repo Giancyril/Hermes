@@ -848,6 +848,18 @@ export default function InboxDashboard() {
                     <div className="flex justify-between"><span>Sender Rank</span><span className="text-white font-bold">Frequent</span></div>
                     <div className="flex justify-between"><span>Previous Threads</span><span className="text-white">8 interactions</span></div>
                     <div className="flex justify-between"><span>Avg Response Time</span><span className="text-white">2.5 hours</span></div>
+                    {classification?.sentiment && (
+                      <div className="flex justify-between">
+                        <span>Sender Sentiment</span>
+                        <span className="text-white font-bold">
+                          {classification.sentiment === 'Positive' ? '😊 Friendly' :
+                           classification.sentiment === 'Frustrated' ? '😠 Frustrated' :
+                           classification.sentiment === 'Urgent' ? '🚨 Urgent' :
+                           classification.sentiment === 'Appreciative' ? '🙏 Appreciative' :
+                           '😐 Neutral'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

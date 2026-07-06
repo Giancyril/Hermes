@@ -111,14 +111,16 @@ async function classifyThread(threadContent) {
         responseMimeType: 'application/json',
       }
     });
-    const prompt = `Classify this email thread on two dimensions:
+    const prompt = `Classify this email thread on three dimensions:
 - Urgency: Low / Medium / High / Critical
 - Intent: Question / Request / Update / Action Required / FYI
+- Sentiment: Positive / Neutral / Frustrated / Urgent / Appreciative
 
 Provide your output in valid JSON format matching this schema:
 {
   "urgency": "Low" | "Medium" | "High" | "Critical",
-  "intent": "Question" | "Request" | "Update" | "Action Required" | "FYI"
+  "intent": "Question" | "Request" | "Update" | "Action Required" | "FYI",
+  "sentiment": "Positive" | "Neutral" | "Frustrated" | "Urgent" | "Appreciative"
 }
 
 Thread:
@@ -131,7 +133,7 @@ ${threadContent}`;
   } catch (error) {
     console.error('Gemini classify error:', error);
     // Return fallback
-    return { urgency: 'Medium', intent: 'Update' };
+    return { urgency: 'Medium', intent: 'Update', sentiment: 'Neutral' };
   }
 }
 
